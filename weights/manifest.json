@@ -1,0 +1,23 @@
+{
+  "file": "maia3-5m.int8.bin",
+  "sha256": "ece07c6a01e53b9995745a79819cfd61a3924a2adf6c825bed1b6855fde7c099",
+  "bytes": 5370012,
+  "model": "Maia3-5M",
+  "upstream": {
+    "repository": "https://github.com/CSSLab/maia3",
+    "commit": "1e13597c42d4858b7cfd7cfdae01e297263364b2",
+    "license": "AGPL-3.0"
+  },
+  "checkpoint": {
+    "file": "maia3-5m.pt",
+    "url": "https://huggingface.co/UofTCSSLab/Maia3-5M/resolve/b6559de2398d7140b985f28fd2c19fb5e47ddabe/maia3-5m.pt",
+    "sha256": "ba14208b2992d85502f5fb501934abf6aaaeb355e9f3fdf90e326911f562524f",
+    "bytes": 20968049
+  },
+  "quantization": {
+    "method": "Symmetric per-row int8 for every 2-D tensor with at least 4096 entries (float32 scale per row = max|row| / 127, values rounded and clipped to [-127, 127]); float16 for all other tensors.",
+    "tool": "tools/export_weights.py",
+    "command": "python tools/export_weights.py upstream/maia3 upstream/maia3-5m.pt out int8"
+  },
+  "format": "Little-endian uint32 header length, JSON header (config and tensor table), then 4-byte-aligned tensor data; an int8 tensor stores its row scales before its values."
+}

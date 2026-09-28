@@ -1,0 +1,5 @@
+# CPU wheels suffice: pip install --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple -r tools/requirements.txt
+torch==2.14.0
+numpy==2.5.3
+chess==1.11.2
+huggingface-hub==2.0.0

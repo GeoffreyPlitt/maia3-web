@@ -1,0 +1,35 @@
+{
+  "name": "maia3-web",
+  "version": "0.1.0",
+  "description": "Maia-3 5M human-move chess model in dependency-free TypeScript, with int8 weights and an optional Web Worker.",
+  "license": "AGPL-3.0-only",
+  "author": "Geoffrey Plitt",
+  "repository": { "type": "git", "url": "git+https://github.com/GeoffreyPlitt/maia3-web.git" },
+  "homepage": "https://github.com/GeoffreyPlitt/maia3-web#readme",
+  "bugs": "https://github.com/GeoffreyPlitt/maia3-web/issues",
+  "keywords": ["chess", "maia", "maia3", "neural-network", "transformer", "web-worker"],
+  "type": "module",
+  "exports": {
+    ".": { "types": "./dist/maia3.d.ts", "default": "./dist/maia3.js" },
+    "./worker": { "types": "./dist/worker.d.ts", "default": "./dist/worker.js" },
+    "./weights/maia3-5m.int8.bin": "./weights/maia3-5m.int8.bin",
+    "./weights/manifest.json": "./weights/manifest.json",
+    "./package.json": "./package.json"
+  },
+  "types": "./dist/maia3.d.ts",
+  "files": ["dist", "src", "weights", "NOTICE"],
+  "sideEffects": ["./dist/worker.js"],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "verify:weights": "node tools/verify_weights.mjs",
+    "prepack": "npm run build"
+  },
+  "devDependencies": {
+    "@types/node": "26.4.1",
+    "chess.js": "1.4.0",
+    "typescript": "6.0.3",
+    "vitest": "5.0.0"
+  }
+}
