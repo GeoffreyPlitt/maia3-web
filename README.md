@@ -24,7 +24,9 @@ npm install https://github.com/GeoffreyPlitt/maia3-web/releases/download/v0.1.0/
 ```
 
 The release tarball contains the compiled JavaScript (`dist/`), type
-declarations, the TypeScript source, and the weights.
+declarations, the TypeScript source, and the weights. The type declarations
+use `fetch` types, so a TypeScript project needs the DOM or WebWorker lib, or
+`@types/node`.
 
 ## Usage
 

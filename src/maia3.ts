@@ -27,10 +27,23 @@ function halfToFloat(h: number) {
   return s * (1 + f / 1024) * 2 ** (e - 15);
 }
 
+// Architecture options this port implements; other Maia-3 exports are rejected.
+const SUPPORTED: Record<string, unknown> = {
+  use_rms_norm: true, omit_qkv_biases: true, use_gab: true, gab_per_square_dim: 0, include_time_info: false,
+  use_absolute_pe: false, use_relative_bias: false, activation: 'gelu',
+};
+function checkSupported(header: Header) {
+  if (header.format !== 'int8' && header.format !== 'fp16') throw new Error(`Unsupported Maia-3 weight format ${header.format}`);
+  const cfg = header.config as unknown as Record<string, unknown>;
+  for (const [key, value] of Object.entries(SUPPORTED))
+    if (cfg[key] !== value) throw new Error(`Unsupported Maia-3 config: ${key} is ${JSON.stringify(cfg[key])}, expected ${JSON.stringify(value)}`);
+}
+
 /** Parses the single-file weight format: uint32 header length, JSON header, then tensor data. */
 export function parseWeights(buffer: ArrayBuffer): Maia3Weights {
   const view = new DataView(buffer), length = view.getUint32(0, true);
   const header = JSON.parse(new TextDecoder().decode(new Uint8Array(buffer, 4, length))) as Header;
+  checkSupported(header);
   const base = 4 + length, tensors = new Map<string, Float32Array>();
   for (const t of header.tensors) {
     const size = t.shape.reduce((a, b) => a * b, 1), out = new Float32Array(size), at = base + t.offset;
@@ -232,6 +245,7 @@ const sqIndex = (sq: string) => (sq.charCodeAt(0) - 97) + (+sq[1] - 1) * 8;
 const mirror = (sq: string) => sq[0] + (9 - +sq[1]);
 /** Index of a UCI move in the policy vector, from the perspective of the side to move. */
 export function moveIndex(uci: string, turn: 'w' | 'b') {
+  if (!/^[a-h][1-8][a-h][1-8][qrbn]?$/.test(uci)) throw new Error(`Not a UCI move: ${uci}`);
   const from = turn === 'w' ? uci.slice(0, 2) : mirror(uci.slice(0, 2)), to = turn === 'w' ? uci.slice(2, 4) : mirror(uci.slice(2, 4));
   if (uci.length > 4) return 4096 + ((from.charCodeAt(0) - 97) * 8 + (to.charCodeAt(0) - 97)) * 4 + PROMOS.indexOf(uci[4]);
   return sqIndex(from) * 64 + sqIndex(to);

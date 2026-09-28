@@ -50,6 +50,14 @@ describe('Maia-3 port', () => {
     expect(analyse(net, fens, [], c.selfElo, c.oppoElo).moves).toEqual([]);
   }, 30_000);
 
+  it('rejects weight files for other architectures', () => {
+    const header = JSON.parse(file.subarray(4, 4 + file.readUInt32LE(0)).toString('utf8'));
+    header.config.use_rms_norm = false;
+    const json = Buffer.from(JSON.stringify(header)), bad = Buffer.alloc(4 + json.length);
+    bad.writeUInt32LE(json.length, 0); json.copy(bad, 4);
+    expect(() => parseWeights(bad.buffer.slice(bad.byteOffset, bad.byteOffset + bad.byteLength))).toThrow('use_rms_norm');
+  });
+
   it('encodes positions from the side to move', () => {
     // After 1.e4, Black to move: the board is mirrored, so Black's e7 pawn is an own pawn on e2.
     const t = tokenize(positionFromFen('rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1'));
@@ -57,6 +65,8 @@ describe('Maia-3 port', () => {
     expect(t[(4 * 8 + 4) * 12 + 6]).toBe(1); // White's e4 pawn: an opponent pawn on the mirrored e5
     expect(moveIndex('e7e5', 'b')).toBe(moveIndex('e2e4', 'w'));
     expect(moveIndex('g2g1n', 'b')).toBe(4096 + (6 * 8 + 6) * 4 + 3);
+    expect(() => moveIndex('e7e8k', 'w')).toThrow('Not a UCI move');
+    expect(() => moveIndex('zz99', 'w')).toThrow('Not a UCI move');
     // Short histories repeat the earliest position.
     const start = positionFromFen(new Chess().fen()), one = encodeHistory([start]);
     expect(one.subarray(0, 12)).toEqual(one.subarray(12 * 7, 12 * 8));

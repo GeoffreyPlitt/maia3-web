@@ -25,17 +25,28 @@ describe('worker protocol', () => {
     expect(await next(1)).toMatchObject({ type: 'error', id: 1, error: expect.stringContaining('load') });
   });
 
-  it('reports failed loads and retries them', async () => {
+  it('reports failed loads', async () => {
     send({ type: 'load', weights: 'https://example.test/missing.bin' });
     send({ type: 'analyse', id: 2, fens: [start], legal: ['e2e4'], selfElo: 1500, oppoElo: 1500 });
     expect(await next(2)).toMatchObject({ type: 'error', id: 2, error: expect.stringContaining('404') });
   });
 
+  it('retries a failed load of the same URL', async () => {
+    let fail = true;
+    fetchMock.mockImplementationOnce(async () => { fail = false; return new Response(null, { status: 503 }); });
+    send({ type: 'load', weights: 'https://example.test/flaky.bin' });
+    send({ type: 'analyse', id: 20, fens: [start], legal: ['e2e4'], selfElo: 1500, oppoElo: 1500 });
+    expect(await next(3)).toMatchObject({ type: 'error', id: 20, error: expect.stringContaining('503') });
+    expect(fail).toBe(false);
+    send({ type: 'analyse', id: 21, fens: [start], legal: ['e2e4'], selfElo: 1500, oppoElo: 1500 });
+    expect(await next(4)).toMatchObject({ type: 'result', id: 21 });
+  }, 30_000);
+
   it('answers requests in order with move probabilities and win/draw/loss', async () => {
     send({ type: 'load', weights: 'https://example.test/maia3-5m.int8.bin' });
     send({ type: 'analyse', id: 3, fens: [start], legal: ['e2e4', 'd2d4', 'a2a3'], selfElo: 1500, oppoElo: 1500 });
     send({ type: 'analyse', id: 4, fens: [start], legal: [], selfElo: 1500, oppoElo: 1500 });
-    const a = await next(3), b = await next(4);
+    const a = await next(5), b = await next(6);
     expect(a.type === 'result' && a.id).toBe(3);
     if (a.type !== 'result') throw new Error(a.error);
     expect(a.moves.map(m => m.move).sort()).toEqual(['a2a3', 'd2d4', 'e2e4']);
